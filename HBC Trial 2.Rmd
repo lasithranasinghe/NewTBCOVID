@@ -35,27 +35,46 @@ Merge two tables to create one master table
 merge_19_20 <- merge(data_2019, data_2020, by = "iso3")
 merge_19_20 <- merge_19_20[, -c(3, 10:11)]
 merge_19_20 <- merge_19_20[, c(1, 2, 3, 6, 4, 7, 5, 8, 9, 12, 10, 13, 11, 14)]
+sums <- colSums(na.omit(merge_19_20[, c(3:14)]))
+vect <- as.vector(c("HBCs", "High Burden Countries", sums))
+merge_19_201 <- rbind(merge_19_20, vect)
 
+##As numeric
+merge_19_201$m04_2019 <- as.numeric(merge_19_201$m04_2019)
+merge_19_201$f04_2019 <- as.numeric(merge_19_201$f04_2019)
+merge_19_201$m514_2019 <- as.numeric(merge_19_201$m514_2019)
+merge_19_201$f514_2019 <- as.numeric(merge_19_201$f514_2019)
+merge_19_201$m15plus_2019 <- as.numeric(merge_19_201$m15plus_2019)
+merge_19_201$f15plus_2019 <- as.numeric(merge_19_201$f15plus_2019)
+merge_19_201$m04_2020 <- as.numeric(merge_19_201$m04_2020)
+merge_19_201$f04_2020 <- as.numeric(merge_19_201$f04_2020)
+merge_19_201$m514_2020 <- as.numeric(merge_19_201$m514_2020)
+merge_19_201$f514_2020 <- as.numeric(merge_19_201$f514_2020)
+merge_19_201$m15plus_2020 <- as.numeric(merge_19_201$m15plus_2020)
+merge_19_201$f15plus_2020 <- as.numeric(merge_19_201$f15plus_2020)
 
 ####if sex disaggregation required, must be done here!!
-mute_merge1 <- mutate(merge_19_20, "all04_19" = m04_2019 + f04_2019, "all514_19" = m514_2019 + f514_2019, "all15plus_19" = m15plus_2019 + f15plus_2019, "all04_20" = m04_2020 + f04_2020, "all514_20" = m514_2020 + f514_2020, "all15plus_20" = m15plus_2020 + f15plus_2020)
+mute_merge1 <- mutate(merge_19_201, "all04_19" = m04_2019 + f04_2019, "all514_19" = m514_2019 + f514_2019, "all15plus_19" = m15plus_2019 + f15plus_2019, "all04_20" = m04_2020 + f04_2020, "all514_20" = m514_2020 + f514_2020, "all15plus_20" = m15plus_2020 + f15plus_2020)
 
 #####separating the non-sex disaggregated data to make table easier to read 
 all_data <- mute_merge1[, c(1, 2, 15:20)]
 all_data <- all_data[, c(1, 2, 3, 6, 4, 7, 5, 8)]
 mutate_percs <- mutate(all_data, "perc_04" = (100 * ((all04_20- all04_19)/all04_19)), "perc_514" = (100 * ((all514_20- all514_19)/all514_19)), "perc_15plus" = (100 * ((all15plus_20- all15plus_19)/all15plus_19)))
-mutate_percs <- mutate_percs[rev(order(mutate_percs$iso3)), ]
+
+mutate_percs$iso3 <- factor(mutate_percs$iso3, levels = rev(unique(mutate_percs$iso3)), ordered = TRUE)
+
+
 
 ```
 
 Trying to create plots using ggplot2
 
 ```{r}
-gg_04 <- ggplot(mutate_percs, aes(x = iso3, y = perc_04)) + geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle = 90)) + theme(legend.title = element_blank()) + xlab("Country") + ylab("Change in Percentage Notifications") + labs(title = "Change in Notifications from 2019 to 2020 in Under 5s") + coord_flip() 
+gg_04 <- ggplot(mutate_percs, aes(x = iso3, y = perc_04, fill = iso3)) + geom_bar(stat = "identity") + scale_fill_manual(values = c( "HBCs" = "red")) + theme(axis.text.x = element_text(angle = 90)) + theme(legend.title = element_blank()) + xlab("Country") + ylab("Change in Percentage Notifications") + labs(title = "Change in Notifications from 2019 to 2020 in Under 5s") + coord_flip() + ylim(-60, 40) + scale_fill_manual(values = c("HBCs" = "red"))
 
-gg_514 <- ggplot(mutate_percs, aes(x = iso3, y = perc_514)) + geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle = 90)) + theme(legend.title = element_blank()) + xlab("Country") + ylab("Change in Percentage Notifications") + labs(title = "Change in Notifications from 2019 to 2020 in 5-14s") + coord_flip() 
+gg_514 <- ggplot(mutate_percs, aes(x = iso3, y = perc_514, fill = iso3)) + geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle = 90)) + theme(legend.title = element_blank()) + xlab("Country") + ylab("Change in Percentage Notifications") + labs(title = "Change in Notifications from 2019 to 2020 in 5-14s") + coord_flip() + ylim(-60, 40) + scale_fill_manual(values = c("HBCs" = "red"))
 
-gg_15plus <- ggplot(mutate_percs, aes(x = iso3, y = perc_15plus)) + geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle = 90)) + theme(legend.title = element_blank()) + xlab("Country") + ylab("Change in Percentage Notifications") + labs(title = "Change in Notifications from 2019 to 2020 in 15 plus") + coord_flip() 
+gg_15plus <- ggplot(mutate_percs, aes(x = iso3, y = perc_15plus, fill = iso3)) + geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle = 90)) + theme(legend.title = element_blank()) + xlab("Country") + ylab("Change in Percentage Notifications") + labs(title = "Change in Notifications from 2019 to 2020 in 15 plus") + coord_flip() + ylim(-60, 40) + scale_fill_manual(values = c("HBCs" = "red"))
 
 ```
 
